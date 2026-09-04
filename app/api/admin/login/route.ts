@@ -5,6 +5,7 @@ import {
   createAdminSession,
   verifyAdminCredentials,
 } from "@/lib/admin-auth";
+import { publicUrl } from "@/lib/public-url";
 
 type Attempt = { count: number; resetsAt: number };
 const attempts = new Map<string, Attempt>();
@@ -20,7 +21,7 @@ function clientKey(request: Request) {
 }
 
 function loginRedirect(request: Request, error?: string) {
-  const url = new URL("/admin", request.url);
+  const url = publicUrl("/admin", request);
   if (error) url.searchParams.set("error", error);
   return NextResponse.redirect(url, 303);
 }
