@@ -1158,6 +1158,45 @@ footer > small {
   padding: 0.15rem 0.35rem;
 }
 
+.admin-login-form {
+  display: grid;
+  gap: 1rem;
+  margin: 1rem 0 0.5rem;
+  text-align: left;
+  width: min(100%, 380px);
+}
+
+.admin-login-form label {
+  color: var(--ink);
+  display: grid;
+  font-size: 0.78rem;
+  font-weight: 700;
+  gap: 0.4rem;
+  letter-spacing: 0.05em;
+}
+
+.admin-login-form input {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  font: inherit;
+  min-height: 46px;
+  padding: 0.7rem 0.85rem;
+}
+
+.admin-login-form .primary-button {
+  border: 0;
+  cursor: pointer;
+  justify-content: center;
+  margin-top: 0.25rem;
+  width: 100%;
+}
+
+.booking-coming-soon {
+  align-content: center;
+}
+
 .admin-shell {
   background: #f8f5ee;
   min-height: 100svh;

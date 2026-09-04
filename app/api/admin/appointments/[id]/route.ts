@@ -31,10 +31,15 @@ export async function PATCH(
     .set({ status: parsed.data.status, updatedAt: sql`CURRENT_TIMESTAMP` })
     .where(eq(appointments.id, id));
   if (parsed.data.status === "cancelled") {
-    await db.batch([
-      update,
-      db.delete(appointmentSlots).where(eq(appointmentSlots.appointmentId, id)),
-    ]);
+    db.transaction((tx) => {
+      tx.update(appointments)
+        .set({ status: parsed.data.status, updatedAt: sql`CURRENT_TIMESTAMP` })
+        .where(eq(appointments.id, id))
+        .run();
+      tx.delete(appointmentSlots)
+        .where(eq(appointmentSlots.appointmentId, id))
+        .run();
+    });
   } else {
     await update;
   }

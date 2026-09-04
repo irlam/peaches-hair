@@ -24,6 +24,12 @@ const bookingSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  if (process.env.BOOKING_ENABLED !== "true") {
+    return Response.json(
+      { error: "Online booking is not open yet." },
+      { status: 503 },
+    );
+  }
   const parsed = bookingSchema.safeParse(await request.json());
   if (!parsed.success) {
     return Response.json(
@@ -88,10 +94,12 @@ export async function POST(request: Request) {
   );
 
   try {
-    await db.batch([
-      db.insert(appointments).values(appointment),
-      ...slots.map((slot) => db.insert(appointmentSlots).values(slot)),
-    ]);
+    db.transaction((tx) => {
+      tx.insert(appointments).values(appointment).run();
+      for (const slot of slots) {
+        tx.insert(appointmentSlots).values(slot).run();
+      }
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "";
     if (message.includes("UNIQUE") || message.includes("constraint")) {

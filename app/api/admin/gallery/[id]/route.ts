@@ -1,8 +1,8 @@
-import { env } from "cloudflare:workers";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { galleryImages } from "@/db/schema";
 import { requireAdminApi } from "@/lib/admin-auth";
+import { deleteStoredObject } from "@/lib/storage";
 
 export async function DELETE(
   _request: Request,
@@ -18,7 +18,7 @@ export async function DELETE(
     .where(eq(galleryImages.id, id))
     .limit(1);
   if (!image) return Response.json({ error: "Not found" }, { status: 404 });
-  await env.BUCKET.delete(image.objectKey);
+  await deleteStoredObject(image.objectKey);
   await getDb().delete(galleryImages).where(eq(galleryImages.id, id));
   return Response.json({ ok: true });
 }

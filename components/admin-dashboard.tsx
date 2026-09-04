@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {
   CalendarDays,
   Check,
@@ -100,8 +101,20 @@ export function AdminDashboard({
   }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    let active = true;
+    fetch("/api/admin/appointments")
+      .then(async (response) => {
+        if (!active) return;
+        if (response.ok) setData(await response.json());
+        else setMessage("The diary could not be loaded.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const todayAppointments = useMemo(
     () => data?.appointments.filter((item) => item.appointmentDate === data.today) ?? [],
@@ -206,9 +219,9 @@ export function AdminDashboard({
   return (
     <main className="admin-shell">
       <header className="admin-header">
-        <a href="/" aria-label="View Peaches Hair website">
+        <Link href="/" aria-label="View Peaches Hair website">
           <Image src="/images/peaches-hair-logo.webp" width={245} height={138} alt="Peaches Hair" />
-        </a>
+        </Link>
         <div>
           <span><UserRound /> {adminName}</span>
           <a href={signOutPath}><LogOut /> Sign out</a>

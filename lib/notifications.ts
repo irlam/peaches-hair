@@ -1,4 +1,3 @@
-import { env } from "cloudflare:workers";
 import { friendlyDate } from "./time";
 
 type AppointmentNotice = {
@@ -13,10 +12,25 @@ type AppointmentNotice = {
   whatsappConsent?: boolean;
 };
 
-type RuntimeValues = Record<string, unknown>;
-
 function config(name: string) {
-  return String((env as unknown as RuntimeValues)[name] ?? "").trim();
+  return String(process.env[name] ?? "").trim();
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>'"]/g, (character) => {
+    const escaped: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      "'": "&#39;",
+      '"': "&quot;",
+    };
+    return escaped[character];
+  });
+}
+
+function emailSubjectValue(value: string) {
+  return value.replace(/[\r\n]+/g, " ").trim();
 }
 
 async function sendEmail(to: string[], subject: string, html: string) {
@@ -80,20 +94,31 @@ export async function sendBookingNotifications(appointment: AppointmentNotice) {
   const date = friendlyDate(appointment.appointmentDate);
   const adminEmail = config("SALON_EMAIL");
   const siteUrl = config("PUBLIC_SITE_URL") || "https://peaches.hair";
+  const customerName = escapeHtml(appointment.customerName);
+  const serviceName = escapeHtml(appointment.serviceName);
+  const safeDate = escapeHtml(date);
+  const safeTime = escapeHtml(appointment.startTime);
+  const safeSiteUrl = escapeHtml(siteUrl);
   const customerBody = emailShell(
     "Your appointment is booked",
-    `<p>Hi ${appointment.customerName},</p><p>We’re looking forward to seeing you for <strong>${appointment.serviceName}</strong> on <strong>${date} at ${appointment.startTime}</strong>.</p><p>If anything changes, please contact us as soon as you can.</p><p><a href="${siteUrl}" style="display:inline-block;background:#211d18;color:#fff;padding:12px 18px;border-radius:999px;text-decoration:none">View Peaches Hair</a></p>`,
+    `<p>Hi ${customerName},</p><p>We’re looking forward to seeing you for <strong>${serviceName}</strong> on <strong>${safeDate} at ${safeTime}</strong>.</p><p>If anything changes, please contact us as soon as you can.</p><p><a href="${safeSiteUrl}" style="display:inline-block;background:#211d18;color:#fff;padding:12px 18px;border-radius:999px;text-decoration:none">View Peaches Hair</a></p>`,
   );
   const adminBody = emailShell(
     "New online booking",
-    `<p><strong>${appointment.customerName}</strong> booked ${appointment.serviceName}.</p><p>${date} at ${appointment.startTime}<br>${appointment.customerEmail}<br>${appointment.customerPhone}</p><p>${appointment.notes || "No notes supplied."}</p><p><a href="${siteUrl}/admin">Open the diary</a></p>`,
+    `<p><strong>${customerName}</strong> booked ${serviceName}.</p><p>${safeDate} at ${safeTime}<br>${escapeHtml(appointment.customerEmail)}<br>${escapeHtml(appointment.customerPhone)}</p><p>${escapeHtml(appointment.notes || "No notes supplied.")}</p><p><a href="${safeSiteUrl}/admin">Open the diary</a></p>`,
   );
 
   const tasks: Promise<unknown>[] = [
     sendEmail([appointment.customerEmail], "Your Peaches Hair appointment", customerBody),
   ];
   if (adminEmail) {
-    tasks.push(sendEmail([adminEmail], `New booking: ${appointment.customerName}`, adminBody));
+    tasks.push(
+      sendEmail(
+        [adminEmail],
+        `New booking: ${emailSubjectValue(appointment.customerName)}`,
+        adminBody,
+      ),
+    );
   }
   const adminWhatsApp = config("ADMIN_WHATSAPP_NUMBER");
   if (adminWhatsApp) {
@@ -111,9 +136,11 @@ export async function sendBookingNotifications(appointment: AppointmentNotice) {
 
 export async function sendReminder(appointment: AppointmentNotice) {
   const date = friendlyDate(appointment.appointmentDate);
+  const customerName = escapeHtml(appointment.customerName);
+  const serviceName = escapeHtml(appointment.serviceName);
   const body = emailShell(
     "A friendly appointment reminder",
-    `<p>Hi ${appointment.customerName},</p><p>Just a friendly reminder that your <strong>${appointment.serviceName}</strong> appointment is tomorrow, <strong>${date} at ${appointment.startTime}</strong>.</p><p>We can’t wait to welcome you to Peaches Hair.</p>`,
+    `<p>Hi ${customerName},</p><p>Just a friendly reminder that your <strong>${serviceName}</strong> appointment is tomorrow, <strong>${escapeHtml(date)} at ${escapeHtml(appointment.startTime)}</strong>.</p><p>We can’t wait to welcome you to Peaches Hair.</p>`,
   );
   const tasks: Promise<unknown>[] = [
     sendEmail([appointment.customerEmail], "A reminder from Peaches Hair", body),

@@ -19,6 +19,9 @@ const BOOKING_HORIZON_DAYS = 120;
 const MINIMUM_NOTICE_SECONDS = 4 * 60 * 60;
 
 export async function GET(request: Request) {
+  if (process.env.BOOKING_ENABLED !== "true") {
+    return Response.json({ slots: [] });
+  }
   const url = new URL(request.url);
   const date = url.searchParams.get("date") ?? "";
   const serviceId = url.searchParams.get("service") ?? "";

@@ -1,13 +1,10 @@
-import { env } from "cloudflare:workers";
 import { and, eq, gte, isNull, lte, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { appointments } from "@/db/schema";
 import { sendReminder } from "@/lib/notifications";
 
 export async function POST(request: Request) {
-  const expected = String(
-    (env as unknown as Record<string, unknown>).CRON_SECRET ?? "",
-  );
+  const expected = String(process.env.CRON_SECRET ?? "");
   const supplied =
     request.headers.get("x-cron-secret") ??
     new URL(request.url).searchParams.get("key") ??

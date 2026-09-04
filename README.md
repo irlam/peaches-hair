@@ -1,74 +1,97 @@
 # Peaches Hair
 
-Mobile-first website, PWA and appointment-management system for **Peaches Hair**, a hair colour specialist in Bolton.
+Mobile-first website, installable PWA and appointment-management system for
+**Peaches Hair**, a hair colour specialist in Bolton.
 
 ## Included
 
-- premium champagne-gold salon website
-- guided three-step online appointment booking
-- live availability with collision-safe slot reservation
-- responsive salon diary and booking-status controls
+- champagne-gold salon website
+- guided online appointment booking with collision-safe slot reservation
+- responsive private salon diary and booking-status controls
 - holiday, break and unavailable-time blocking
-- email confirmations and admin alerts through Resend
-- WhatsApp Business admin alerts and opted-in client reminders
-- secure 24-hour reminder endpoint
+- editable services, prices and opening hours
+- email confirmations and salon alerts through Resend
+- optional WhatsApp Business alerts and opted-in reminders
 - moderated customer reviews
-- admin gallery uploads backed by object storage
-- installable PWA with offline shell
-- private admin access using Sign in with ChatGPT and an email allowlist
+- admin gallery uploads stored on the Plesk server
+- installable PWA with an offline shell
+- password-protected admin area with signed, secure sessions
 
-## Local development
+## Plesk requirements
 
-Requires Node.js 22.13 or newer.
+- Plesk Node.js Toolkit
+- Node.js 22.13 or newer
+- npm
+- HTTPS before using the admin login or enabling the PWA
 
-```bash
-npm ci
-npm run db:generate
-npm run dev
-```
+The application stores its small SQLite database and gallery uploads in the
+ignored `data/` directory. Include that directory in the Plesk backup schedule.
 
-The production deployment uses Cloudflare-compatible D1 and R2 bindings named
-`DB` and `BUCKET`.
+## Plesk application settings
+
+| Setting | Value |
+| --- | --- |
+| Node.js version | 22.13 or newer |
+| Package manager | npm |
+| Application mode | Production |
+| Application root | Directory containing this repository |
+| Document root | `public` inside the application root |
+| Application startup file | `server.js` |
+
+After pulling the repository into Plesk:
+
+1. Open **Websites & Domains → peaches.hair → Node.js**.
+2. Add the private environment variables listed below.
+3. Click **NPM Install**.
+4. Click **Run script**, choose `build`, and run it.
+5. Click **Enable Node.js** or **Restart App**.
+
+For later Git updates, pull the latest commit, run `build`, and restart the app.
+Run **NPM Install** again when `package.json` or `package-lock.json` changes.
 
 ## Configuration
 
-Copy `.env.example` to `.env.local` for local work. Never commit real keys.
+Copy the names from `.env.example` into Plesk's **Custom Environment
+Variables**. Never commit real credentials.
 
 | Variable | Purpose |
 | --- | --- |
-| `ADMIN_EMAILS` | Comma-separated admin email allowlist |
+| `PUBLIC_SITE_URL` | Public origin, normally `https://peaches.hair` |
+| `BOOKING_ENABLED` | Keep `false` until hours and alerts are ready; use `true` to accept bookings |
+| `ADMIN_EMAIL` | Email address used to sign in to `/admin` |
+| `ADMIN_PASSWORD` | Unique admin password of at least 12 characters |
+| `ADMIN_NAME` | Name displayed in the admin area |
+| `SESSION_SECRET` | Random secret of at least 32 characters used to sign sessions |
 | `RESEND_API_KEY` | Sends customer confirmations and salon alerts |
 | `EMAIL_FROM` | Verified sender shown on appointment emails |
 | `SALON_EMAIL` | Destination for new-booking alerts |
 | `WHATSAPP_ACCESS_TOKEN` | Meta WhatsApp Business Cloud API token |
-| `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Business sending number ID |
+| `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Business sending-number ID |
 | `ADMIN_WHATSAPP_NUMBER` | Admin mobile in international format |
 | `WHATSAPP_ADMIN_TEMPLATE` | Approved new-booking template name |
 | `WHATSAPP_REMINDER_TEMPLATE` | Approved reminder template name |
 | `CRON_SECRET` | Protects the automated reminder endpoint |
-| `PUBLIC_SITE_URL` | Public site origin, normally `https://peaches.hair` |
 
 ## Appointment reminders
 
-Run this endpoint every hour using a scheduler:
+Create an hourly Plesk scheduled task that sends a POST request to:
 
 ```text
-POST https://peaches.hair/api/cron/reminders
-Header: x-cron-secret: YOUR_CRON_SECRET
+https://peaches.hair/api/cron/reminders?key=YOUR_CRON_SECRET
 ```
 
-The job sends reminders for confirmed appointments approximately 24 hours away
-and records successful delivery so the same appointment is not reminded twice.
-
-## WhatsApp templates
+The job sends reminders for confirmed appointments approximately 24 hours in
+advance and records successful delivery so a reminder is not sent twice.
 
 Automated WhatsApp messages require approved Meta templates. The default names
-are `new_booking` and `appointment_reminder`; both can be changed through
-environment variables.
+are `new_booking` and `appointment_reminder`.
 
-## Data
+## Local development
 
-- D1 stores appointments, reserved slots, services, hours, blocks and reviews.
-- R2 stores gallery image files.
-- Uploaded images accept JPG, PNG and WebP files up to 8 MB.
-- No provider keys or customer records are stored in the repository.
+```bash
+npm ci
+npm run dev
+```
+
+Create `.env.local` from `.env.example` when testing private features. Run
+`npm run test` before deployment.

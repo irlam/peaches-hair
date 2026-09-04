@@ -17,6 +17,8 @@ import { ServicesSection } from "@/components/services-section";
 import { SiteHeader } from "@/components/site-header";
 import { DEFAULT_SERVICES } from "@/lib/salon";
 
+export const dynamic = "force-dynamic";
+
 export default function Home() {
   return (
     <main>
@@ -49,7 +51,10 @@ export default function Home() {
           </a>
         </div>
 
-        <BookingFlow initialServices={DEFAULT_SERVICES} />
+        <BookingFlow
+          initialServices={DEFAULT_SERVICES}
+          bookingEnabled={process.env.BOOKING_ENABLED === "true"}
+        />
       </section>
 
       <ServicesSection initialServices={DEFAULT_SERVICES} />

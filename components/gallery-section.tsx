@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 
 type GalleryImage = {
@@ -30,7 +31,13 @@ export function GallerySection() {
       <div className="gallery-grid">
         {images.map((image) => (
           <figure key={image.id}>
-            <img src={image.url} alt={image.altText} loading="lazy" />
+            <Image
+              src={image.url}
+              alt={image.altText}
+              fill
+              sizes="(max-width: 700px) 100vw, (max-width: 1100px) 50vw, 33vw"
+              unoptimized
+            />
             {image.caption && <figcaption>{image.caption}</figcaption>}
           </figure>
         ))}

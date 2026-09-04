@@ -1,9 +1,9 @@
-import { env } from "cloudflare:workers";
 import { desc } from "drizzle-orm";
 import { getDb } from "@/db";
 import { galleryImages } from "@/db/schema";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { makeId } from "@/lib/salon";
+import { deleteStoredObject, putStoredObject } from "@/lib/storage";
 
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MAX_BYTES = 8 * 1024 * 1024;
@@ -36,9 +36,7 @@ export async function POST(request: Request) {
   const id = makeId("img");
   const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const objectKey = `gallery/${id}.${extension}`;
-  await env.BUCKET.put(objectKey, file.stream(), {
-    httpMetadata: { contentType: file.type },
-  });
+  await putStoredObject(objectKey, new Uint8Array(await file.arrayBuffer()));
   try {
     await getDb().insert(galleryImages).values({
       id,
@@ -48,7 +46,7 @@ export async function POST(request: Request) {
       contentType: file.type,
     });
   } catch (error) {
-    await env.BUCKET.delete(objectKey);
+    await deleteStoredObject(objectKey);
     throw error;
   }
   return Response.json({ id }, { status: 201 });

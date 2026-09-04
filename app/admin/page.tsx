@@ -1,67 +1,86 @@
 import Image from "next/image";
 import Link from "next/link";
-import { env } from "cloudflare:workers";
-import {
-  chatGPTSignInPath,
-  chatGPTSignOutPath,
-  getChatGPTUser,
-} from "@/app/chatgpt-auth";
 import { AdminDashboard } from "@/components/admin-dashboard";
-import { configuredAdminEmails } from "@/lib/admin-auth";
+import { adminIsConfigured, getAdminUser } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPage() {
-  const user = await getChatGPTUser();
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const user = await getAdminUser();
   if (!user) {
+    const { error } = await searchParams;
+    const configured = adminIsConfigured();
     return (
       <main className="admin-auth-shell">
         <div className="admin-auth-card">
-          <Image src="/images/peaches-hair-logo.webp" alt="Peaches Hair" width={340} height={191} />
+          <Image
+            src="/images/peaches-hair-logo.webp"
+            alt="Peaches Hair"
+            width={340}
+            height={191}
+          />
           <p className="eyebrow">Salon administration</p>
           <h1>Your diary, all in one place.</h1>
-          <p>Sign in securely to manage appointments, availability, gallery images and reviews.</p>
-          <a className="primary-button" href={chatGPTSignInPath("/admin")} target="_top">
-            Sign in to admin
-          </a>
-          <Link href="/">Back to the website</Link>
-        </div>
-      </main>
-    );
-  }
-
-  const allowed = configuredAdminEmails();
-  if (allowed.length === 0 || !allowed.includes(user.email.toLowerCase())) {
-    return (
-      <main className="admin-auth-shell">
-        <div className="admin-auth-card">
-          <p className="eyebrow">Admin setup required</p>
-          <h1>This account isn’t authorised yet.</h1>
           <p>
-            Add <strong>{user.email}</strong> to the <code>ADMIN_EMAILS</code>{" "}
-            setting before using the salon diary.
+            Sign in securely to manage appointments, availability, gallery
+            images and reviews.
           </p>
-          <a href={chatGPTSignOutPath("/admin")}>Use a different account</a>
+          {!configured ? (
+            <p className="admin-message">
+              Admin access will be available once the private Plesk settings
+              have been added.
+            </p>
+          ) : (
+            <form action="/api/admin/login" method="post" className="admin-login-form">
+              <label>
+                Email
+                <input name="email" type="email" autoComplete="username" required />
+              </label>
+              <label>
+                Password
+                <input
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                />
+              </label>
+              {error === "invalid" && (
+                <p className="form-error">The email or password is incorrect.</p>
+              )}
+              {error === "locked" && (
+                <p className="form-error">
+                  Too many attempts. Please wait 15 minutes and try again.
+                </p>
+              )}
+              <button className="primary-button" type="submit">
+                Sign in to admin
+              </button>
+            </form>
+          )}
           <Link href="/">Back to the website</Link>
         </div>
       </main>
     );
   }
 
-  const runtime = env as unknown as Record<string, unknown>;
   return (
     <AdminDashboard
       adminName={user.displayName}
       config={{
-        email: Boolean(runtime.RESEND_API_KEY && runtime.SALON_EMAIL),
+        email: Boolean(process.env.RESEND_API_KEY && process.env.SALON_EMAIL),
         whatsapp: Boolean(
-          runtime.WHATSAPP_ACCESS_TOKEN &&
-            runtime.WHATSAPP_PHONE_NUMBER_ID &&
-            runtime.ADMIN_WHATSAPP_NUMBER,
+          process.env.WHATSAPP_ACCESS_TOKEN &&
+            process.env.WHATSAPP_PHONE_NUMBER_ID &&
+            process.env.ADMIN_WHATSAPP_NUMBER,
         ),
-        reminders: Boolean(runtime.CRON_SECRET),
+        reminders: Boolean(process.env.CRON_SECRET),
       }}
-      signOutPath={chatGPTSignOutPath("/")}
+      signOutPath="/api/admin/logout"
     />
   );
 }

@@ -13,7 +13,10 @@ import {
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { SalonService } from "@/lib/salon";
 
-type BookingFlowProps = { initialServices: SalonService[] };
+type BookingFlowProps = {
+  initialServices: SalonService[];
+  bookingEnabled: boolean;
+};
 type Result = {
   reference: string;
   appointment: { service: string; date: string; time: string };
@@ -36,7 +39,10 @@ function dateChoices() {
   });
 }
 
-export function BookingFlow({ initialServices }: BookingFlowProps) {
+export function BookingFlow({
+  initialServices,
+  bookingEnabled,
+}: BookingFlowProps) {
   const [services, setServices] = useState(initialServices);
   const [step, setStep] = useState(0);
   const [serviceId, setServiceId] = useState("");
@@ -47,23 +53,21 @@ export function BookingFlow({ initialServices }: BookingFlowProps) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<Result | null>(null);
-  const choices = useMemo(dateChoices, []);
+  const choices = useMemo(() => dateChoices(), []);
   const selectedService = services.find((service) => service.id === serviceId);
 
   useEffect(() => {
+    if (!bookingEnabled) return;
     fetch("/api/services")
       .then((response) => response.json())
       .then((data: { services?: SalonService[] }) => {
         if (data.services?.length) setServices(data.services);
       })
       .catch(() => undefined);
-  }, []);
+  }, [bookingEnabled]);
 
   useEffect(() => {
-    if (!date || !serviceId) return;
-    setLoadingSlots(true);
-    setTime("");
-    setError("");
+    if (!bookingEnabled || !date || !serviceId) return;
     fetch(
       `/api/availability?date=${encodeURIComponent(date)}&service=${encodeURIComponent(serviceId)}`,
     )
@@ -74,7 +78,23 @@ export function BookingFlow({ initialServices }: BookingFlowProps) {
       })
       .catch((reason: Error) => setError(reason.message))
       .finally(() => setLoadingSlots(false));
-  }, [date, serviceId]);
+  }, [bookingEnabled, date, serviceId]);
+
+  if (!bookingEnabled) {
+    return (
+      <section className="booking-card booking-coming-soon">
+        <p className="eyebrow">Online booking</p>
+        <h2>Appointments are opening soon.</h2>
+        <p>
+          We’re putting the finishing touches to the Peaches Hair diary. Please
+          check back shortly to choose your appointment.
+        </p>
+        <a className="secondary-button" href="#contact">
+          Contact Peaches Hair
+        </a>
+      </section>
+    );
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -172,7 +192,13 @@ export function BookingFlow({ initialServices }: BookingFlowProps) {
                 type="button"
                 key={service.id}
                 className={serviceId === service.id ? "selected" : ""}
-                onClick={() => setServiceId(service.id)}
+                onClick={() => {
+                  setServiceId(service.id);
+                  setDate("");
+                  setTime("");
+                  setSlots([]);
+                  setError("");
+                }}
               >
                 <span>
                   <strong>{service.name}</strong>
@@ -208,7 +234,13 @@ export function BookingFlow({ initialServices }: BookingFlowProps) {
                   type="button"
                   key={value}
                   className={date === value ? "selected" : ""}
-                  onClick={() => setDate(value)}
+                  onClick={() => {
+                    setDate(value);
+                    setTime("");
+                    setSlots([]);
+                    setError("");
+                    setLoadingSlots(true);
+                  }}
                 >
                   <small>{choice.toLocaleDateString("en-GB", { weekday: "short" })}</small>
                   <strong>{choice.getDate()}</strong>
