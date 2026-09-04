@@ -1639,6 +1639,129 @@ form.admin-card {
   grid-column: 2;
 }
 
+.whatsapp-admin-layout {
+  align-items: start;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  margin-top: 1rem;
+}
+
+.whatsapp-settings-form {
+  gap: 1.2rem;
+}
+
+.whatsapp-settings-heading {
+  align-items: center;
+  display: flex;
+  gap: 0.85rem;
+}
+
+.whatsapp-settings-heading > span {
+  align-items: center;
+  background: #e8f8ed;
+  border-radius: 50%;
+  color: #178845;
+  display: flex;
+  flex: 0 0 auto;
+  height: 48px;
+  justify-content: center;
+  width: 48px;
+}
+
+.whatsapp-settings-heading h2,
+.whatsapp-settings-heading p {
+  margin: 0;
+}
+
+.whatsapp-settings-heading p,
+.whatsapp-settings-form label small,
+.whatsapp-advanced p,
+.whatsapp-private-settings p {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+}
+
+.whatsapp-settings-form label small {
+  display: block;
+  font-weight: 500;
+  margin-top: 0.3rem;
+}
+
+.whatsapp-option-list {
+  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.whatsapp-option-list > label {
+  align-items: start;
+  display: flex;
+  gap: 0.65rem;
+  padding: 1rem 0.7rem;
+}
+
+.whatsapp-option-list input {
+  accent-color: #178845;
+  height: 18px;
+  margin-top: 0.1rem;
+  width: 18px;
+}
+
+.whatsapp-option-list span,
+.whatsapp-option-list small {
+  display: block;
+}
+
+.whatsapp-option-list strong {
+  font-size: 0.82rem;
+}
+
+.whatsapp-advanced {
+  background: var(--champagne-pale);
+  border-radius: 14px;
+  padding: 0.9rem 1rem;
+}
+
+.whatsapp-advanced summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.whatsapp-advanced[open] {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.whatsapp-actions {
+  justify-content: flex-start;
+}
+
+.whatsapp-private-settings > svg {
+  color: var(--champagne-dark);
+  height: 2rem;
+  width: 2rem;
+}
+
+.whatsapp-private-settings code {
+  background: var(--ink);
+  border-radius: 7px;
+  color: #fff;
+  display: block;
+  font-size: 0.7rem;
+  margin-top: 0.4rem;
+  overflow-wrap: anywhere;
+  padding: 0.55rem 0.65rem;
+}
+
+.whatsapp-help-copy {
+  border-top: 1px solid var(--line);
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
 .admin-settings-layout {
   display: grid;
   gap: 2rem;
@@ -1828,7 +1951,8 @@ form.admin-card {
   .admin-two-column,
   .admin-settings-layout,
   .config-grid,
-  .review-admin-list {
+  .review-admin-list,
+  .whatsapp-admin-layout {
     grid-template-columns: 1fr;
   }
 
@@ -1941,6 +2065,14 @@ form.admin-card {
   .social-settings-form > label,
   .social-settings-form > button {
     grid-column: 1;
+  }
+
+  .whatsapp-option-list {
+    grid-template-columns: 1fr;
+  }
+
+  .whatsapp-actions {
+    display: grid;
   }
 
   .admin-header img {

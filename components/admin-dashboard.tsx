@@ -11,6 +11,7 @@ import {
   LogOut,
   Mail,
   MessageCircle,
+  Send,
   Share2,
   RefreshCw,
   ShieldCheck,
@@ -80,6 +81,17 @@ type DashboardData = {
     facebook: string;
     tiktok: string;
   };
+  whatsappSettings: {
+    publicNumber: string;
+    adminNumber: string;
+    showPublicChat: boolean;
+    adminAlertsEnabled: boolean;
+    customerConfirmationsEnabled: boolean;
+    customerRemindersEnabled: boolean;
+    adminTemplate: string;
+    confirmationTemplate: string;
+    reminderTemplate: string;
+  };
   today: string;
 };
 
@@ -92,11 +104,12 @@ export function AdminDashboard({
 }: {
   adminName: string;
   signOutPath: string;
-  config: { email: boolean; whatsapp: boolean; reminders: boolean };
+  config: { email: boolean; whatsappApi: boolean; reminders: boolean };
 }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [testingWhatsApp, setTestingWhatsApp] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -237,6 +250,65 @@ export function AdminDashboard({
     });
     const result = (await response.json()) as { error?: string };
     setMessage(response.ok ? "Social links updated on the website." : result.error ?? "Check the profile addresses.");
+    if (response.ok) await load();
+  }
+
+  function whatsAppPayload(form: HTMLFormElement) {
+    const values = new FormData(form);
+    return {
+      type: "whatsapp",
+      publicNumber: values.get("publicNumber"),
+      adminNumber: values.get("adminNumber"),
+      showPublicChat: values.get("showPublicChat") === "on",
+      adminAlertsEnabled: values.get("adminAlertsEnabled") === "on",
+      customerConfirmationsEnabled:
+        values.get("customerConfirmationsEnabled") === "on",
+      customerRemindersEnabled:
+        values.get("customerRemindersEnabled") === "on",
+      adminTemplate: values.get("adminTemplate"),
+      confirmationTemplate: values.get("confirmationTemplate"),
+      reminderTemplate: values.get("reminderTemplate"),
+    };
+  }
+
+  async function storeWhatsAppSettings(form: HTMLFormElement) {
+    const response = await fetch("/api/admin/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(whatsAppPayload(form)),
+    });
+    const result = (await response.json()) as { error?: string };
+    if (!response.ok) {
+      setMessage(result.error ?? "Check the WhatsApp settings.");
+      return false;
+    }
+    return true;
+  }
+
+  async function saveWhatsAppSettings(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (await storeWhatsAppSettings(event.currentTarget)) {
+      setMessage("WhatsApp settings saved.");
+      await load();
+    }
+  }
+
+  async function testWhatsApp(form: HTMLFormElement | null) {
+    if (!form || testingWhatsApp) return;
+    setTestingWhatsApp(true);
+    setMessage("");
+    if (!(await storeWhatsAppSettings(form))) {
+      setTestingWhatsApp(false);
+      return;
+    }
+    const response = await fetch("/api/admin/whatsapp/test", { method: "POST" });
+    const result = (await response.json()) as { error?: string };
+    setMessage(
+      response.ok
+        ? "Test WhatsApp message sent. Check the admin alert phone."
+        : result.error ?? "The WhatsApp test could not be sent.",
+    );
+    setTestingWhatsApp(false);
     if (response.ok) await load();
   }
 
@@ -411,9 +483,78 @@ export function AdminDashboard({
         <TabsContent value="setup">
           <div className="config-grid">
             <ConfigCard icon={<Mail />} title="Email alerts" ready={config.email} text="Booking confirmations for clients and new-booking alerts for the salon." />
-            <ConfigCard icon={<MessageCircle />} title="WhatsApp alerts" ready={config.whatsapp} text="Instant admin alerts and opted-in client reminders through WhatsApp Business." />
+            <ConfigCard icon={<MessageCircle />} title="WhatsApp connection" ready={config.whatsappApi} text="Private Meta Cloud API credentials used to send secure WhatsApp messages." />
             <ConfigCard icon={<Clock3 />} title="24-hour reminders" ready={config.reminders} text="A secure reminder task checks tomorrow’s diary and sends friendly messages." />
           </div>
+          {data && (
+            <div className="whatsapp-admin-layout">
+              <form
+                className="admin-card whatsapp-settings-form"
+                key={JSON.stringify(data.whatsappSettings)}
+                onSubmit={saveWhatsAppSettings}
+              >
+                <div className="whatsapp-settings-heading">
+                  <span><MessageCircle /></span>
+                  <div>
+                    <h2>WhatsApp settings</h2>
+                    <p>Choose what visitors and clients can use. Numbers beginning 07 are automatically changed to UK +44 format.</p>
+                  </div>
+                </div>
+                <div className="form-row">
+                  <label>
+                    Public WhatsApp number
+                    <Input name="publicNumber" type="tel" placeholder="+44 7…" defaultValue={data.whatsappSettings.publicNumber} />
+                    <small>Used by the public chat button.</small>
+                  </label>
+                  <label>
+                    Admin alert number
+                    <Input name="adminNumber" type="tel" placeholder="+44 7…" defaultValue={data.whatsappSettings.adminNumber} />
+                    <small>The phone that receives new-booking alerts.</small>
+                  </label>
+                </div>
+                <div className="whatsapp-option-list">
+                  <label><input type="checkbox" name="showPublicChat" defaultChecked={data.whatsappSettings.showPublicChat} /><span><strong>Show WhatsApp chat on the website</strong><small>Visitors can start a conversation from the contact section.</small></span></label>
+                  <label><input type="checkbox" name="adminAlertsEnabled" defaultChecked={data.whatsappSettings.adminAlertsEnabled} /><span><strong>New-booking alerts</strong><small>Send appointment details to the admin alert number.</small></span></label>
+                  <label><input type="checkbox" name="customerConfirmationsEnabled" defaultChecked={data.whatsappSettings.customerConfirmationsEnabled} /><span><strong>Customer booking confirmations</strong><small>Send only when the client ticks WhatsApp consent.</small></span></label>
+                  <label><input type="checkbox" name="customerRemindersEnabled" defaultChecked={data.whatsappSettings.customerRemindersEnabled} /><span><strong>Customer 24-hour reminders</strong><small>Requires WhatsApp consent and the reminder task.</small></span></label>
+                </div>
+                <details className="whatsapp-advanced">
+                  <summary>Meta template names</summary>
+                  <p>These must exactly match approved English (UK) templates in WhatsApp Manager. Each template uses four values: client, service, date and time.</p>
+                  <label>New-booking alert template<Input name="adminTemplate" defaultValue={data.whatsappSettings.adminTemplate} required /></label>
+                  <label>Customer confirmation template<Input name="confirmationTemplate" defaultValue={data.whatsappSettings.confirmationTemplate} required /></label>
+                  <label>Customer reminder template<Input name="reminderTemplate" defaultValue={data.whatsappSettings.reminderTemplate} required /></label>
+                </details>
+                <div className="admin-actions whatsapp-actions">
+                  <Button type="submit">Save WhatsApp settings</Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={!config.whatsappApi || testingWhatsApp}
+                    onClick={(event) => testWhatsApp(event.currentTarget.form)}
+                  >
+                    {testingWhatsApp ? <><LoaderCircle className="spin" /> Sending…</> : <><Send /> Save & send test</>}
+                  </Button>
+                </div>
+              </form>
+              <aside className="admin-card whatsapp-private-settings">
+                <ShieldCheck />
+                <h2>Private connection</h2>
+                <p>Your Meta access token stays in Plesk and is never displayed here.</p>
+                <Badge variant={config.whatsappApi ? "default" : "outline"}>
+                  {config.whatsappApi ? "Meta connection ready" : "Meta connection needed"}
+                </Badge>
+                {!config.whatsappApi && (
+                  <div>
+                    <p>Add these private variables in Plesk, then restart the app:</p>
+                    <code>WHATSAPP_ACCESS_TOKEN</code>
+                    <code>WHATSAPP_PHONE_NUMBER_ID</code>
+                  </div>
+                )}
+                <p className="whatsapp-help-copy">The admin alert phone must be allowed as a test recipient while your Meta app is still in development mode.</p>
+              </aside>
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </main>

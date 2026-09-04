@@ -19,11 +19,18 @@ import { ServicesSection } from "@/components/services-section";
 import { SiteHeader } from "@/components/site-header";
 import { DEFAULT_SERVICES } from "@/lib/salon";
 import { getSocialLinks } from "@/lib/social";
+import { getWhatsAppSettings, whatsAppChatUrl } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const socialLinks = await getSocialLinks();
+  const [socialLinks, whatsappSettings] = await Promise.all([
+    getSocialLinks(),
+    getWhatsAppSettings(),
+  ]);
+  const whatsappChat = whatsappSettings.showPublicChat
+    ? whatsAppChatUrl(whatsappSettings.publicNumber)
+    : "";
 
   return (
     <main>
@@ -58,6 +65,10 @@ export default async function Home() {
         <BookingFlow
           initialServices={DEFAULT_SERVICES}
           bookingEnabled={process.env.BOOKING_ENABLED === "true"}
+          whatsappConfirmationsEnabled={
+            whatsappSettings.customerConfirmationsEnabled
+          }
+          whatsappRemindersEnabled={whatsappSettings.customerRemindersEnabled}
         />
       </section>
 
@@ -119,6 +130,13 @@ export default async function Home() {
             <span><small>Email</small>hello@peaches.hair</span>
             <ArrowRight aria-hidden="true" />
           </a>
+          {whatsappChat && (
+            <a href={whatsappChat} rel="noreferrer" target="_blank">
+              <MessageCircle aria-hidden="true" />
+              <span><small>WhatsApp</small>Chat with Peaches Hair</span>
+              <ArrowRight aria-hidden="true" />
+            </a>
+          )}
           {socialLinks.instagram && (
             <a href={socialLinks.instagram} rel="noreferrer" target="_blank">
               <Camera aria-hidden="true" />

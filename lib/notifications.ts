@@ -1,4 +1,5 @@
 import { friendlyDate } from "./time";
+import { getWhatsAppSettings, sendWhatsAppTemplate } from "./whatsapp";
 
 type AppointmentNotice = {
   id: string;
@@ -50,42 +51,6 @@ async function sendEmail(to: string[], subject: string, html: string) {
   return { sent: true };
 }
 
-async function sendWhatsApp(to: string, template: string, parameters: string[]) {
-  const token = config("WHATSAPP_ACCESS_TOKEN");
-  const phoneNumberId = config("WHATSAPP_PHONE_NUMBER_ID");
-  if (!token || !phoneNumberId || !to) {
-    return { sent: false, reason: "not_configured" };
-  }
-
-  const response = await fetch(
-    `https://graph.facebook.com/v22.0/${phoneNumberId}/messages`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to: to.replace(/\D/g, ""),
-        type: "template",
-        template: {
-          name: template,
-          language: { code: "en_GB" },
-          components: [
-            {
-              type: "body",
-              parameters: parameters.map((text) => ({ type: "text", text })),
-            },
-          ],
-        },
-      }),
-    },
-  );
-  if (!response.ok) throw new Error(`WhatsApp provider returned ${response.status}`);
-  return { sent: true };
-}
-
 function emailShell(title: string, body: string) {
   return `<!doctype html><html><body style="margin:0;background:#f6f1e8;color:#211d18;font-family:Arial,sans-serif"><div style="max-width:620px;margin:auto;padding:36px 22px"><div style="background:#fff;border:1px solid #e8dcc2;border-radius:22px;padding:30px"><p style="letter-spacing:.2em;color:#9a824d;margin:0 0 8px">PEACHES HAIR</p><h1 style="font-family:Georgia,serif;font-weight:400;margin:0 0 20px">${title}</h1>${body}<p style="margin:26px 0 0;color:#6e665c">Peaches Hair · Hair Colour Specialist · Bolton</p></div></div></body></html>`;
 }
@@ -107,6 +72,13 @@ export async function sendBookingNotifications(appointment: AppointmentNotice) {
     "New online booking",
     `<p><strong>${customerName}</strong> booked ${serviceName}.</p><p>${safeDate} at ${safeTime}<br>${escapeHtml(appointment.customerEmail)}<br>${escapeHtml(appointment.customerPhone)}</p><p>${escapeHtml(appointment.notes || "No notes supplied.")}</p><p><a href="${safeSiteUrl}/admin">Open the diary</a></p>`,
   );
+  const whatsapp = await getWhatsAppSettings();
+  const whatsAppParameters = [
+    appointment.customerName,
+    appointment.serviceName,
+    date,
+    appointment.startTime,
+  ];
 
   const tasks: Promise<unknown>[] = [
     sendEmail([appointment.customerEmail], "Your Peaches Hair appointment", customerBody),
@@ -120,15 +92,22 @@ export async function sendBookingNotifications(appointment: AppointmentNotice) {
       ),
     );
   }
-  const adminWhatsApp = config("ADMIN_WHATSAPP_NUMBER");
-  if (adminWhatsApp) {
+  if (whatsapp.adminAlertsEnabled && whatsapp.adminNumber) {
     tasks.push(
-      sendWhatsApp(adminWhatsApp, config("WHATSAPP_ADMIN_TEMPLATE") || "new_booking", [
-        appointment.customerName,
-        appointment.serviceName,
-        date,
-        appointment.startTime,
-      ]),
+      sendWhatsAppTemplate(
+        whatsapp.adminNumber,
+        whatsapp.adminTemplate,
+        whatsAppParameters,
+      ),
+    );
+  }
+  if (appointment.whatsappConsent && whatsapp.customerConfirmationsEnabled) {
+    tasks.push(
+      sendWhatsAppTemplate(
+        appointment.customerPhone,
+        whatsapp.confirmationTemplate,
+        whatsAppParameters,
+      ),
     );
   }
   return Promise.allSettled(tasks);
@@ -145,11 +124,12 @@ export async function sendReminder(appointment: AppointmentNotice) {
   const tasks: Promise<unknown>[] = [
     sendEmail([appointment.customerEmail], "A reminder from Peaches Hair", body),
   ];
-  if (appointment.whatsappConsent) {
+  const whatsapp = await getWhatsAppSettings();
+  if (appointment.whatsappConsent && whatsapp.customerRemindersEnabled) {
     tasks.push(
-      sendWhatsApp(
+      sendWhatsAppTemplate(
         appointment.customerPhone,
-        config("WHATSAPP_REMINDER_TEMPLATE") || "appointment_reminder",
+        whatsapp.reminderTemplate,
         [appointment.customerName, appointment.serviceName, date, appointment.startTime],
       ),
     );

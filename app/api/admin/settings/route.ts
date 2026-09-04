@@ -3,6 +3,10 @@ import { getDb } from "@/db";
 import { businessHours, services, settings } from "@/db/schema";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { SOCIAL_SETTING_KEYS } from "@/lib/social";
+import {
+  normaliseWhatsAppNumber,
+  WHATSAPP_SETTING_KEYS,
+} from "@/lib/whatsapp";
 
 const serviceSchema = z.object({
   type: z.literal("service"),
@@ -42,6 +46,35 @@ const socialsSchema = z.object({
   instagram: socialUrl,
   facebook: socialUrl,
   tiktok: socialUrl,
+});
+
+const whatsAppNumber = z
+  .string()
+  .trim()
+  .max(30)
+  .refine(
+    (value) => !value || normaliseWhatsAppNumber(value) !== null,
+    "Use a valid mobile number, preferably starting +44.",
+  );
+
+const templateName = z
+  .string()
+  .trim()
+  .min(1)
+  .max(512)
+  .regex(/^[a-z0-9_]+$/, "Template names use lowercase letters, numbers and underscores.");
+
+const whatsappSchema = z.object({
+  type: z.literal("whatsapp"),
+  publicNumber: whatsAppNumber,
+  adminNumber: whatsAppNumber,
+  showPublicChat: z.boolean(),
+  adminAlertsEnabled: z.boolean(),
+  customerConfirmationsEnabled: z.boolean(),
+  customerRemindersEnabled: z.boolean(),
+  adminTemplate: templateName,
+  confirmationTemplate: templateName,
+  reminderTemplate: templateName,
 });
 
 export async function PUT(request: Request) {
@@ -112,6 +145,46 @@ export async function PUT(request: Request) {
           .insert(settings)
           .values({ key, value })
           .onConflictDoUpdate({ target: settings.key, set: { value } }),
+      ),
+    );
+    return Response.json({ ok: true });
+  }
+
+  const whatsapp = whatsappSchema.safeParse(payload);
+  if (whatsapp.success) {
+    const value = whatsapp.data;
+    if (value.showPublicChat && !value.publicNumber) {
+      return Response.json(
+        { error: "Add the public WhatsApp number before showing the chat button." },
+        { status: 400 },
+      );
+    }
+    if (value.adminAlertsEnabled && !value.adminNumber) {
+      return Response.json(
+        { error: "Add the admin alert number before enabling booking alerts." },
+        { status: 400 },
+      );
+    }
+    const values = [
+      [WHATSAPP_SETTING_KEYS.publicNumber, normaliseWhatsAppNumber(value.publicNumber) || ""],
+      [WHATSAPP_SETTING_KEYS.adminNumber, normaliseWhatsAppNumber(value.adminNumber) || ""],
+      [WHATSAPP_SETTING_KEYS.showPublicChat, String(value.showPublicChat)],
+      [WHATSAPP_SETTING_KEYS.adminAlertsEnabled, String(value.adminAlertsEnabled)],
+      [
+        WHATSAPP_SETTING_KEYS.customerConfirmationsEnabled,
+        String(value.customerConfirmationsEnabled),
+      ],
+      [WHATSAPP_SETTING_KEYS.customerRemindersEnabled, String(value.customerRemindersEnabled)],
+      [WHATSAPP_SETTING_KEYS.adminTemplate, value.adminTemplate],
+      [WHATSAPP_SETTING_KEYS.confirmationTemplate, value.confirmationTemplate],
+      [WHATSAPP_SETTING_KEYS.reminderTemplate, value.reminderTemplate],
+    ] as const;
+    await Promise.all(
+      values.map(([key, storedValue]) =>
+        getDb()
+          .insert(settings)
+          .values({ key, value: storedValue })
+          .onConflictDoUpdate({ target: settings.key, set: { value: storedValue } }),
       ),
     );
     return Response.json({ ok: true });

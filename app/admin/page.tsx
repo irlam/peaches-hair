@@ -73,10 +73,8 @@ export default async function AdminPage({
       adminName={user.displayName}
       config={{
         email: Boolean(process.env.RESEND_API_KEY && process.env.SALON_EMAIL),
-        whatsapp: Boolean(
-          process.env.WHATSAPP_ACCESS_TOKEN &&
-            process.env.WHATSAPP_PHONE_NUMBER_ID &&
-            process.env.ADMIN_WHATSAPP_NUMBER,
+        whatsappApi: Boolean(
+          process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID,
         ),
         reminders: Boolean(process.env.CRON_SECRET),
       }}

@@ -68,9 +68,11 @@ Variables**. Never commit real credentials.
 | `SALON_EMAIL` | Destination for new-booking alerts |
 | `WHATSAPP_ACCESS_TOKEN` | Meta WhatsApp Business Cloud API token |
 | `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Business sending-number ID |
-| `ADMIN_WHATSAPP_NUMBER` | Admin mobile in international format |
-| `WHATSAPP_ADMIN_TEMPLATE` | Approved new-booking template name |
-| `WHATSAPP_REMINDER_TEMPLATE` | Approved reminder template name |
+| `WHATSAPP_GRAPH_API_VERSION` | Optional Meta Graph API version override; defaults to `v22.0` |
+| `ADMIN_WHATSAPP_NUMBER` | Legacy fallback; the admin mobile is now editable in `/admin` |
+| `WHATSAPP_ADMIN_TEMPLATE` | Legacy fallback for the approved new-booking template name |
+| `WHATSAPP_CONFIRMATION_TEMPLATE` | Legacy fallback for the approved confirmation template name |
+| `WHATSAPP_REMINDER_TEMPLATE` | Legacy fallback for the approved reminder template name |
 | `CRON_SECRET` | Protects the automated reminder endpoint |
 
 ## Appointment reminders
@@ -84,8 +86,15 @@ https://peaches.hair/api/cron/reminders?key=YOUR_CRON_SECRET
 The job sends reminders for confirmed appointments approximately 24 hours in
 advance and records successful delivery so a reminder is not sent twice.
 
-Automated WhatsApp messages require approved Meta templates. The default names
-are `new_booking` and `appointment_reminder`.
+WhatsApp numbers, feature switches and template names are managed under
+**Admin → Alerts**. The Meta access token and sending-number ID remain private
+Plesk variables. The **Save & send test** button checks the connection without
+revealing either secret.
+
+Automated messages require approved English (UK) Meta templates. The default
+names are `new_booking`, `booking_confirmation` and `appointment_reminder`.
+Each template receives four body variables in this order: client name, service,
+appointment date and appointment time.
 
 ## Local development
 

@@ -11,6 +11,7 @@ import {
 import { requireAdminApi } from "@/lib/admin-auth";
 import { DEFAULT_HOURS, DEFAULT_SERVICES } from "@/lib/salon";
 import { londonNow } from "@/lib/time";
+import { whatsAppSettingsFromRows } from "@/lib/whatsapp";
 
 export async function GET() {
   if (!(await requireAdminApi())) {
@@ -57,6 +58,7 @@ export async function GET() {
       facebook: settingRows.find((row) => row.key === "social.facebook")?.value ?? "",
       tiktok: settingRows.find((row) => row.key === "social.tiktok")?.value ?? "",
     },
+    whatsappSettings: whatsAppSettingsFromRows(settingRows),
     today,
   });
 }

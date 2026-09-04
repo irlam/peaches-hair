@@ -16,6 +16,8 @@ import type { SalonService } from "@/lib/salon";
 type BookingFlowProps = {
   initialServices: SalonService[];
   bookingEnabled: boolean;
+  whatsappConfirmationsEnabled: boolean;
+  whatsappRemindersEnabled: boolean;
 };
 type Result = {
   reference: string;
@@ -42,6 +44,8 @@ function dateChoices() {
 export function BookingFlow({
   initialServices,
   bookingEnabled,
+  whatsappConfirmationsEnabled,
+  whatsappRemindersEnabled,
 }: BookingFlowProps) {
   const [services, setServices] = useState(initialServices);
   const [step, setStep] = useState(0);
@@ -55,6 +59,13 @@ export function BookingFlow({
   const [result, setResult] = useState<Result | null>(null);
   const choices = useMemo(() => dateChoices(), []);
   const selectedService = services.find((service) => service.id === serviceId);
+  const whatsappEnabled =
+    whatsappConfirmationsEnabled || whatsappRemindersEnabled;
+  const whatsappConsentText = whatsappConfirmationsEnabled
+    ? whatsappRemindersEnabled
+      ? "Send my booking confirmation and friendly reminder by WhatsApp."
+      : "Send my booking confirmation by WhatsApp."
+    : "Send me a friendly appointment reminder by WhatsApp.";
 
   useEffect(() => {
     if (!bookingEnabled) return;
@@ -145,8 +156,8 @@ export function BookingFlow({
         </p>
         <div className="reference">Booking reference <b>{result.reference}</b></div>
         <p className="small-copy">
-          We’ve sent confirmation to your email. If you opted in, you’ll also
-          receive a friendly WhatsApp reminder before your visit.
+          We’ve sent confirmation to your email.
+          {whatsappEnabled && " If you opted in, your selected WhatsApp messages will follow too."}
         </p>
         <button
           className="secondary-button"
@@ -314,12 +325,12 @@ export function BookingFlow({
             />
           </label>
           <input className="honeypot" name="company" tabIndex={-1} autoComplete="off" />
-          <label className="check-label">
-            <input name="whatsappConsent" type="checkbox" />
-            <span>
-              Send my appointment confirmation and friendly reminder by WhatsApp.
-            </span>
-          </label>
+          {whatsappEnabled && (
+            <label className="check-label">
+              <input name="whatsappConsent" type="checkbox" />
+              <span>{whatsappConsentText}</span>
+            </label>
+          )}
           {error && <p className="form-error">{error}</p>}
           <button className="primary-button" type="submit" disabled={submitting}>
             {submitting ? <><LoaderCircle className="spin" /> Booking…</> : <><Sparkles /> Confirm appointment</>}
