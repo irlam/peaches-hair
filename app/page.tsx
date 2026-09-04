@@ -1,28 +1,32 @@
 import Image from "next/image";
 import {
   ArrowRight,
-  Clock3,
   Camera,
+  Clock3,
   Mail,
   MapPin,
   MessageCircle,
+  Music2,
   Scissors,
   Sparkles,
+  UsersRound,
 } from "lucide-react";
 import { BookingFlow } from "@/components/booking-flow";
 import { GallerySection } from "@/components/gallery-section";
-import { PwaRegister } from "@/components/pwa-register";
+import { InstallAppCard } from "@/components/install-app-card";
 import { ReviewSection } from "@/components/review-section";
 import { ServicesSection } from "@/components/services-section";
 import { SiteHeader } from "@/components/site-header";
 import { DEFAULT_SERVICES } from "@/lib/salon";
+import { getSocialLinks } from "@/lib/social";
 
 export const dynamic = "force-dynamic";
 
-export default function Home() {
+export default async function Home() {
+  const socialLinks = await getSocialLinks();
+
   return (
     <main>
-      <PwaRegister />
       <SiteHeader />
 
       <section id="book" className="hero-shell">
@@ -97,6 +101,7 @@ export default function Home() {
 
       <GallerySection />
       <ReviewSection />
+      <InstallAppCard />
 
       <section id="contact" className="contact-section">
         <div>
@@ -114,11 +119,27 @@ export default function Home() {
             <span><small>Email</small>hello@peaches.hair</span>
             <ArrowRight aria-hidden="true" />
           </a>
-          <a href="https://instagram.com/" rel="noreferrer" target="_blank">
-            <Camera aria-hidden="true" />
-            <span><small>Instagram</small>Follow our colour work</span>
-            <ArrowRight aria-hidden="true" />
-          </a>
+          {socialLinks.instagram && (
+            <a href={socialLinks.instagram} rel="noreferrer" target="_blank">
+              <Camera aria-hidden="true" />
+              <span><small>Instagram</small>Follow our colour work</span>
+              <ArrowRight aria-hidden="true" />
+            </a>
+          )}
+          {socialLinks.facebook && (
+            <a href={socialLinks.facebook} rel="noreferrer" target="_blank">
+              <UsersRound aria-hidden="true" />
+              <span><small>Facebook</small>News, updates and transformations</span>
+              <ArrowRight aria-hidden="true" />
+            </a>
+          )}
+          {socialLinks.tiktok && (
+            <a href={socialLinks.tiktok} rel="noreferrer" target="_blank">
+              <Music2 aria-hidden="true" />
+              <span><small>TikTok</small>Watch our latest colour work</span>
+              <ArrowRight aria-hidden="true" />
+            </a>
+          )}
         </div>
       </section>
 
@@ -134,6 +155,9 @@ export default function Home() {
           <a href="#services">Services</a>
           <a href="#book">Book</a>
           <a href="#contact">Contact</a>
+          {socialLinks.instagram && <a href={socialLinks.instagram} rel="noreferrer" target="_blank">Instagram</a>}
+          {socialLinks.facebook && <a href={socialLinks.facebook} rel="noreferrer" target="_blank">Facebook</a>}
+          {socialLinks.tiktok && <a href={socialLinks.tiktok} rel="noreferrer" target="_blank">TikTok</a>}
           <a href="/admin">Admin</a>
         </nav>
         <small>© {new Date().getFullYear()} Peaches Hair. All rights reserved.</small>

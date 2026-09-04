@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { getDb } from "@/db";
-import { businessHours, services } from "@/db/schema";
+import { businessHours, services, settings } from "@/db/schema";
 import { requireAdminApi } from "@/lib/admin-auth";
+import { SOCIAL_SETTING_KEYS } from "@/lib/social";
 
 const serviceSchema = z.object({
   type: z.literal("service"),
@@ -21,6 +22,26 @@ const hoursSchema = z.object({
   opensAt: z.string().regex(/^\d{2}:\d{2}$/),
   closesAt: z.string().regex(/^\d{2}:\d{2}$/),
   isClosed: z.boolean(),
+});
+
+const socialUrl = z
+  .string()
+  .trim()
+  .max(500)
+  .refine((value) => {
+    if (!value) return true;
+    try {
+      return new URL(value).protocol === "https:";
+    } catch {
+      return false;
+    }
+  }, "Use a complete https:// profile address.");
+
+const socialsSchema = z.object({
+  type: z.literal("socials"),
+  instagram: socialUrl,
+  facebook: socialUrl,
+  tiktok: socialUrl,
 });
 
 export async function PUT(request: Request) {
@@ -75,6 +96,24 @@ export async function PUT(request: Request) {
           isClosed: value.isClosed,
         },
       });
+    return Response.json({ ok: true });
+  }
+
+  const socials = socialsSchema.safeParse(payload);
+  if (socials.success) {
+    const values = [
+      [SOCIAL_SETTING_KEYS.instagram, socials.data.instagram],
+      [SOCIAL_SETTING_KEYS.facebook, socials.data.facebook],
+      [SOCIAL_SETTING_KEYS.tiktok, socials.data.tiktok],
+    ] as const;
+    await Promise.all(
+      values.map(([key, value]) =>
+        getDb()
+          .insert(settings)
+          .values({ key, value })
+          .onConflictDoUpdate({ target: settings.key, set: { value } }),
+      ),
+    );
     return Response.json({ ok: true });
   }
 

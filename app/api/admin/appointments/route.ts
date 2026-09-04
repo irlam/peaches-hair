@@ -6,6 +6,7 @@ import {
   businessHours,
   reviews,
   services,
+  settings,
 } from "@/db/schema";
 import { requireAdminApi } from "@/lib/admin-auth";
 import { DEFAULT_HOURS, DEFAULT_SERVICES } from "@/lib/salon";
@@ -17,7 +18,7 @@ export async function GET() {
   }
   const db = getDb();
   const today = londonNow().date;
-  const [appointmentRows, blockRows, reviewRows, serviceRows, hoursRows] = await Promise.all([
+  const [appointmentRows, blockRows, reviewRows, serviceRows, hoursRows, settingRows] = await Promise.all([
     db
       .select()
       .from(appointments)
@@ -32,6 +33,7 @@ export async function GET() {
     db.select().from(reviews).orderBy(desc(reviews.createdAt)).limit(100),
     db.select().from(services).orderBy(services.sortOrder, services.name),
     db.select().from(businessHours).orderBy(businessHours.dayOfWeek),
+    db.select().from(settings),
   ]);
   return Response.json({
     appointments: appointmentRows,
@@ -50,6 +52,11 @@ export async function GET() {
       const custom = hoursRows.find((row) => row.dayOfWeek === dayOfWeek);
       return custom ?? { dayOfWeek, ...DEFAULT_HOURS[dayOfWeek] };
     }),
+    socialLinks: {
+      instagram: settingRows.find((row) => row.key === "social.instagram")?.value ?? "",
+      facebook: settingRows.find((row) => row.key === "social.facebook")?.value ?? "",
+      tiktok: settingRows.find((row) => row.key === "social.tiktok")?.value ?? "",
+    },
     today,
   });
 }

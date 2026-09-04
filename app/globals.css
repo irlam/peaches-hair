@@ -1017,6 +1017,134 @@ h3 {
   width: 1.4rem;
 }
 
+.app-install-section {
+  margin: 0 auto;
+  max-width: 1440px;
+  padding: clamp(3.5rem, 7vw, 7rem) 4vw 0;
+}
+
+.app-install-card {
+  align-items: center;
+  background:
+    radial-gradient(circle at 85% 15%, rgba(199, 173, 112, 0.22), transparent 32%),
+    linear-gradient(135deg, #17140f, #262018);
+  border: 1px solid rgba(227, 205, 154, 0.25);
+  border-radius: 32px;
+  box-shadow: 0 28px 70px rgba(39, 29, 16, 0.17);
+  color: var(--paper);
+  display: grid;
+  gap: clamp(1.4rem, 3vw, 2.6rem);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  position: relative;
+}
+
+.app-install-icon {
+  height: clamp(82px, 10vw, 108px);
+  position: relative;
+  width: clamp(82px, 10vw, 108px);
+}
+
+.app-install-icon img {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 25%;
+  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.32);
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.app-install-icon span {
+  align-items: center;
+  background: var(--champagne);
+  border: 3px solid #211b14;
+  border-radius: 50%;
+  bottom: -8px;
+  color: var(--ink);
+  display: flex;
+  height: 38px;
+  justify-content: center;
+  position: absolute;
+  right: -8px;
+  width: 38px;
+}
+
+.app-install-icon span svg {
+  height: 18px;
+  width: 18px;
+}
+
+.app-install-copy .eyebrow {
+  color: var(--champagne);
+  margin-bottom: 0.45rem;
+}
+
+.app-install-copy .eyebrow svg {
+  height: 1rem;
+  width: 1rem;
+}
+
+.app-install-copy h2 {
+  color: #fffaf1;
+  font-size: clamp(2rem, 4vw, 4rem);
+  margin: 0;
+}
+
+.app-install-copy > p:last-child {
+  color: #d4cec4;
+  margin: 0.7rem 0 0;
+  max-width: 650px;
+}
+
+.app-install-action button,
+.app-installed {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.82rem;
+  font-weight: 800;
+  gap: 0.55rem;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0.85rem 1.25rem;
+  white-space: nowrap;
+}
+
+.app-install-action button {
+  background: var(--champagne);
+  border: 0;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.app-install-action button:hover {
+  background: #ead39c;
+  transform: translateY(-2px);
+}
+
+.app-install-action svg,
+.app-installed svg {
+  height: 1.1rem;
+  width: 1.1rem;
+}
+
+.app-installed {
+  border: 1px solid rgba(227, 205, 154, 0.45);
+  color: var(--champagne-pale);
+}
+
+.app-install-instructions {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 13px;
+  color: #f5efe4;
+  font-size: 0.86rem;
+  grid-column: 2 / -1;
+  margin: -0.8rem 0 0;
+  padding: 0.8rem 1rem;
+}
+
 .contact-section {
   display: grid;
   gap: clamp(3rem, 8vw, 8rem);
@@ -1457,6 +1585,31 @@ form.admin-card {
   width: 2.2rem;
 }
 
+.social-settings-form {
+  grid-template-columns: auto minmax(0, 1fr);
+  max-width: 760px;
+}
+
+.social-settings-form > svg {
+  background: var(--champagne-pale);
+  border-radius: 50%;
+  color: var(--ink);
+  height: 46px;
+  padding: 0.75rem;
+  width: 46px;
+}
+
+.social-settings-form > div p {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  margin-bottom: 0;
+}
+
+.social-settings-form > label,
+.social-settings-form > button {
+  grid-column: 2;
+}
+
 .config-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -1702,6 +1855,15 @@ form.admin-card {
   .hours-row button {
     grid-column: 2;
   }
+
+  .app-install-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .app-install-action,
+  .app-install-instructions {
+    grid-column: 2;
+  }
 }
 
 @media (max-width: 560px) {
@@ -1747,6 +1909,38 @@ form.admin-card {
   .contact-section {
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+
+  .app-install-section {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .app-install-card {
+    grid-template-columns: 1fr;
+    padding: 1.35rem;
+  }
+
+  .app-install-copy h2 {
+    font-size: 2.45rem;
+  }
+
+  .app-install-action,
+  .app-install-instructions {
+    grid-column: 1;
+  }
+
+  .app-install-action button {
+    width: 100%;
+  }
+
+  .social-settings-form {
+    grid-template-columns: 1fr;
+  }
+
+  .social-settings-form > label,
+  .social-settings-form > button {
+    grid-column: 1;
   }
 
   .admin-header img {

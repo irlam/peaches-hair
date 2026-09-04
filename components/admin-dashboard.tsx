@@ -11,6 +11,7 @@ import {
   LogOut,
   Mail,
   MessageCircle,
+  Share2,
   RefreshCw,
   ShieldCheck,
   Star,
@@ -74,6 +75,11 @@ type DashboardData = {
   reviews: Review[];
   services: Service[];
   businessHours: BusinessHours[];
+  socialLinks: {
+    instagram: string;
+    facebook: string;
+    tiktok: string;
+  };
   today: string;
 };
 
@@ -216,6 +222,24 @@ export function AdminDashboard({
     if (response.ok) await load();
   }
 
+  async function saveSocialLinks(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const response = await fetch("/api/admin/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "socials",
+        instagram: form.get("instagram"),
+        facebook: form.get("facebook"),
+        tiktok: form.get("tiktok"),
+      }),
+    });
+    const result = (await response.json()) as { error?: string };
+    setMessage(response.ok ? "Social links updated on the website." : result.error ?? "Check the profile addresses.");
+    if (response.ok) await load();
+  }
+
   return (
     <main className="admin-shell">
       <header className="admin-header">
@@ -252,6 +276,7 @@ export function AdminDashboard({
           <TabsTrigger value="services">Services & hours</TabsTrigger>
           <TabsTrigger value="reviews">Reviews</TabsTrigger>
           <TabsTrigger value="gallery">Gallery</TabsTrigger>
+          <TabsTrigger value="socials">Social links</TabsTrigger>
           <TabsTrigger value="setup">Alerts</TabsTrigger>
         </TabsList>
 
@@ -365,6 +390,22 @@ export function AdminDashboard({
             <label>Optional caption<Textarea name="caption" placeholder="A short note about the result" /></label>
             <Button type="submit">Upload image</Button>
           </form>
+        </TabsContent>
+
+        <TabsContent value="socials">
+          {data && (
+            <form className="admin-card social-settings-form" onSubmit={saveSocialLinks}>
+              <Share2 />
+              <div>
+                <h2>Social profiles</h2>
+                <p>Add the complete profile addresses below. Leave a field blank to hide that social link from the website.</p>
+              </div>
+              <label>Instagram profile<Input type="url" name="instagram" placeholder="https://instagram.com/your-profile" defaultValue={data.socialLinks.instagram} /></label>
+              <label>Facebook page<Input type="url" name="facebook" placeholder="https://facebook.com/your-page" defaultValue={data.socialLinks.facebook} /></label>
+              <label>TikTok profile<Input type="url" name="tiktok" placeholder="https://tiktok.com/@your-profile" defaultValue={data.socialLinks.tiktok} /></label>
+              <Button type="submit">Save social links</Button>
+            </form>
+          )}
         </TabsContent>
 
         <TabsContent value="setup">

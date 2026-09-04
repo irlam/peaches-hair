@@ -1,4 +1,4 @@
-const CACHE = "peaches-hair-v2";
+const CACHE = "peaches-hair-v3";
 const SHELL = [
   "/",
   "/manifest.webmanifest",

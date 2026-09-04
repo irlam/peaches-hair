@@ -14,7 +14,8 @@ Mobile-first website, installable PWA and appointment-management system for
 - optional WhatsApp Business alerts and opted-in reminders
 - moderated customer reviews
 - admin gallery uploads stored on the Plesk server
-- installable PWA with an offline shell
+- visitor-friendly phone installation with an offline shell
+- editable Instagram, Facebook and TikTok profile links
 - password-protected admin area with signed, secure sessions
 
 ## Plesk requirements

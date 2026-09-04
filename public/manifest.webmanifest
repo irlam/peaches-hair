@@ -2,11 +2,16 @@
   "name": "Peaches Hair Bolton",
   "short_name": "Peaches Hair",
   "description": "Book and manage appointments with Peaches Hair, Bolton.",
-  "start_url": "/",
+  "id": "/",
+  "start_url": "/?source=app",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "background_color": "#f7f2e8",
   "theme_color": "#181511",
   "orientation": "portrait-primary",
+  "lang": "en-GB",
+  "categories": ["beauty", "lifestyle"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
