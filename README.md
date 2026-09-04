@@ -36,7 +36,7 @@ ignored `data/` directory. Include that directory in the Plesk backup schedule.
 | Application mode | Production |
 | Application root | Directory containing this repository |
 | Document root | `public` inside the application root |
-| Application startup file | `server.js` |
+| Application startup file | `_passenger.cjs` |
 
 After pulling the repository into Plesk:
 
