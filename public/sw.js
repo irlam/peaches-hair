@@ -1,14 +1,16 @@
-const CACHE = "peaches-hair-v3";
+const CACHE = "peaches-hair-v4";
 const SHELL = [
   "/",
   "/manifest.webmanifest",
   "/images/peaches-hair-logo.webp",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png"
+  "/app-icon-192.png",
+  "/app-icon-512.png"
 ];
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
+  event.waitUntil(caches.open(CACHE).then((cache) =>
+    Promise.allSettled(SHELL.map((url) => cache.add(url)))
+  ));
   self.skipWaiting();
 });
 
@@ -16,7 +18,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))
+      .then((keys) => Promise.all(keys.filter((key) => key.startsWith("peaches-hair-") && key !== CACHE).map((key) => caches.delete(key))))
   );
   self.clients.claim();
 });
@@ -33,10 +35,20 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE).then((cache) => cache.put(event.request, copy)).catch(() => undefined);
+        }
         return response;
       })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match("/")))
+      .catch(async () => {
+        const cached = await caches.match(event.request);
+        if (cached) return cached;
+        if (event.request.mode === "navigate") {
+          const home = await caches.match("/");
+          if (home) return home;
+        }
+        return Response.error();
+      })
   );
 });

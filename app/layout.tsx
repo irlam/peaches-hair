@@ -37,7 +37,7 @@ export const metadata: Metadata = {
       "Beautiful colour, personal service and easy online booking at Peaches Hair in Bolton.",
     images: ["/og.png"],
   },
-  manifest: "/manifest.webmanifest",
+  manifest: "/manifest.webmanifest?v=4",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",

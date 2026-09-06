@@ -36,7 +36,9 @@ export function InstallAppCard() {
     const installedCheck = window.setTimeout(() => setInstalled(isInstalled()), 0);
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+      navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).catch((error) => {
+        console.warn("Peaches Hair offline setup failed", error);
+      });
     }
 
     const capturePrompt = (event: Event) => {
@@ -81,7 +83,7 @@ export function InstallAppCard() {
     <section className="app-install-section" aria-labelledby="app-install-title">
       <div className="app-install-card">
         <div className="app-install-icon" aria-hidden="true">
-          <Image src="/icons/icon-192.png" alt="" width={92} height={92} />
+          <Image src="/app-icon-192.png" alt="" width={92} height={92} />
           <span><Download /></span>
         </div>
         <div className="app-install-copy">
