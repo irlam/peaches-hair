@@ -65,6 +65,7 @@ export default async function Home() {
         <BookingFlow
           initialServices={DEFAULT_SERVICES}
           bookingEnabled={process.env.BOOKING_ENABLED === "true"}
+          whatsappChatUrl={whatsappChat}
           whatsappConfirmationsEnabled={
             whatsappSettings.customerConfirmationsEnabled
           }
@@ -72,6 +73,7 @@ export default async function Home() {
         />
       </section>
 
+      <InstallAppCard />
       <ServicesSection initialServices={DEFAULT_SERVICES} />
 
       <section id="salon" className="salon-section">
@@ -112,7 +114,6 @@ export default async function Home() {
 
       <GallerySection />
       <ReviewSection />
-      <InstallAppCard />
 
       <section id="contact" className="contact-section">
         <div>

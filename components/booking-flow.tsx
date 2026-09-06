@@ -7,6 +7,7 @@ import {
   Check,
   Clock3,
   LoaderCircle,
+  MessageCircle,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -16,6 +17,7 @@ import type { SalonService } from "@/lib/salon";
 type BookingFlowProps = {
   initialServices: SalonService[];
   bookingEnabled: boolean;
+  whatsappChatUrl: string;
   whatsappConfirmationsEnabled: boolean;
   whatsappRemindersEnabled: boolean;
 };
@@ -44,6 +46,7 @@ function dateChoices() {
 export function BookingFlow({
   initialServices,
   bookingEnabled,
+  whatsappChatUrl,
   whatsappConfirmationsEnabled,
   whatsappRemindersEnabled,
 }: BookingFlowProps) {
@@ -183,7 +186,14 @@ export function BookingFlow({
           <p className="eyebrow">Book online</p>
           <h2>Find your appointment</h2>
         </div>
-        <span className="booking-badge"><ShieldCheck /> Secure booking</span>
+        <div className="booking-header-actions">
+          <span className="booking-badge"><ShieldCheck /> Secure booking</span>
+          {whatsappChatUrl && (
+            <a className="booking-whatsapp" href={whatsappChatUrl} target="_blank" rel="noopener noreferrer">
+              <MessageCircle aria-hidden="true" /> WhatsApp us
+            </a>
+          )}
+        </div>
       </div>
       <ol className="booking-steps" aria-label="Booking progress">
         {STEP_LABELS.map((label, index) => (
