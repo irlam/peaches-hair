@@ -23,8 +23,8 @@ const serviceSchema = z.object({
 const hoursSchema = z.object({
   type: z.literal("hours"),
   dayOfWeek: z.number().int().min(0).max(6),
-  opensAt: z.string().regex(/^\d{2}:\d{2}$/),
-  closesAt: z.string().regex(/^\d{2}:\d{2}$/),
+  opensAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
+  closesAt: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   isClosed: z.boolean(),
 });
 
@@ -81,7 +81,14 @@ export async function PUT(request: Request) {
   if (!(await requireAdminApi())) {
     return Response.json({ error: "Unauthorised" }, { status: 401 });
   }
-  const payload = await request.json();
+  const payload = await request.json().catch(() => null);
+  const contact = z.object({ type: z.literal("contact"), email: z.union([z.string().trim().email().max(254), z.literal("")]) }).safeParse(payload);
+  if (contact.success) {
+    const value = contact.data.email;
+    await getDb().insert(settings).values({ key: "contact.email", value })
+      .onConflictDoUpdate({ target: settings.key, set: { value } });
+    return Response.json({ ok: true });
+  }
   const service = serviceSchema.safeParse(payload);
   if (service.success) {
     const value = service.data;

@@ -21,7 +21,7 @@ export async function GET(
   return new Response(new Uint8Array(object), {
     headers: {
       "Content-Type": image.contentType,
-      "Cache-Control": "public, max-age=3600",
+      "Cache-Control": "no-store",
       ETag: `"${createHash("sha256").update(object).digest("hex")}"`,
     },
   });

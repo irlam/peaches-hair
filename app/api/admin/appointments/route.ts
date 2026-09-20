@@ -12,6 +12,7 @@ import { requireAdminApi } from "@/lib/admin-auth";
 import { DEFAULT_HOURS, DEFAULT_SERVICES } from "@/lib/salon";
 import { londonNow } from "@/lib/time";
 import { whatsAppSettingsFromRows } from "@/lib/whatsapp";
+import { getContactEmail } from "@/lib/contact";
 
 export async function GET() {
   if (!(await requireAdminApi())) {
@@ -37,6 +38,7 @@ export async function GET() {
     db.select().from(settings),
   ]);
   return Response.json({
+    contactEmail: await getContactEmail(),
     appointments: appointmentRows,
     blockedSlots: blockRows,
     reviews: reviewRows,

@@ -6,7 +6,6 @@ import {
   CalendarDays,
   Check,
   Clock3,
-  ImagePlus,
   LoaderCircle,
   LogOut,
   Mail,
@@ -25,6 +24,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { GalleryManager } from "@/components/gallery-manager";
+import { PricePosterEditor } from "@/components/price-poster-editor";
 
 type Appointment = {
   id: string;
@@ -71,6 +72,7 @@ type BusinessHours = {
   isClosed: boolean;
 };
 type DashboardData = {
+  contactEmail: string;
   appointments: Appointment[];
   blockedSlots: Block[];
   reviews: Review[];
@@ -185,13 +187,14 @@ export function AdminDashboard({
     await load();
   }
 
-  async function uploadImage(event: FormEvent<HTMLFormElement>) {
+  async function saveContact(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const response = await fetch("/api/admin/gallery", { method: "POST", body: form });
-    const result = (await response.json()) as { error?: string };
-    setMessage(response.ok ? "Gallery image uploaded." : result.error ?? "Upload failed.");
-    if (response.ok) event.currentTarget.reset();
+    try {
+      const response = await fetch("/api/admin/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "contact", email: form.get("email") }) });
+      setMessage(response.ok ? "Public email updated." : "Enter a valid email address.");
+      if (response.ok) await load();
+    } catch { setMessage("Could not save the email. Please try again."); }
   }
 
   async function saveService(event: FormEvent<HTMLFormElement>, service: Service) {
@@ -348,7 +351,8 @@ export function AdminDashboard({
           <TabsTrigger value="services">Services & hours</TabsTrigger>
           <TabsTrigger value="reviews">Reviews</TabsTrigger>
           <TabsTrigger value="gallery">Gallery</TabsTrigger>
-          <TabsTrigger value="socials">Social links</TabsTrigger>
+          <TabsTrigger value="poster">Price-list poster</TabsTrigger>
+          <TabsTrigger value="socials">Contact & socials</TabsTrigger>
           <TabsTrigger value="setup">Alerts</TabsTrigger>
         </TabsList>
 
@@ -390,7 +394,7 @@ export function AdminDashboard({
             </section>
             <section>
               <h2>Opening hours</h2>
-              <p className="settings-intro">These hours control the dates and times offered to clients.</p>
+              <p className="settings-intro">These hours update the homepage and control the dates and times offered to clients. Refresh the homepage after saving.</p>
               <div className="hours-admin-list">
                 {data?.businessHours.map((hours) => (
                   <form className="admin-card hours-row" key={hours.dayOfWeek} onSubmit={(event) => saveHours(event, hours)}>
@@ -453,18 +457,19 @@ export function AdminDashboard({
         </TabsContent>
 
         <TabsContent value="gallery">
-          <form className="admin-card gallery-upload" onSubmit={uploadImage}>
-            <ImagePlus />
-            <h2>Add colour work to the gallery</h2>
-            <p>Use a clear JPG, PNG or WebP image up to 8 MB.</p>
-            <Input type="file" name="image" accept="image/jpeg,image/png,image/webp" required />
-            <label>Image description<Input name="altText" placeholder="Warm blonde balayage with soft waves" required /></label>
-            <label>Optional caption<Textarea name="caption" placeholder="A short note about the result" /></label>
-            <Button type="submit">Upload image</Button>
-          </form>
+          <GalleryManager />
+        </TabsContent>
+
+        <TabsContent value="poster">
+          {data && <PricePosterEditor services={data.services} />}
         </TabsContent>
 
         <TabsContent value="socials">
+          {data && <form className="admin-card social-settings-form" onSubmit={saveContact}>
+            <h2>Public email</h2><p>Visitors can tap Email to compose a message in their configured email app. Use an inbox you can receive replies at. Leave blank to hide the button.</p>
+            <label>Email address<Input name="email" type="email" maxLength={254} defaultValue={data.contactEmail} /></label>
+            <Button type="submit">Save email</Button>
+          </form>}
           {data && (
             <form className="admin-card social-settings-form" onSubmit={saveSocialLinks}>
               <Share2 />
@@ -579,7 +584,7 @@ function AppointmentList({
           <div className="appointment-person">
             <strong>{appointment.customerName}</strong>
             <span>{appointment.serviceName} · until {appointment.endTime}</span>
-            <small>{appointment.customerPhone} · {appointment.customerEmail}</small>
+            <small><a href={`tel:${appointment.customerPhone}`}>{appointment.customerPhone}</a> · <a href={`mailto:${appointment.customerEmail}?subject=${encodeURIComponent("Your Peaches Hair appointment")}`}>{appointment.customerEmail}</a></small>
             {appointment.notes && <p>{appointment.notes}</p>}
           </div>
           <Badge variant={appointment.status === "confirmed" ? "default" : "outline"}>{appointment.status.replace("_", " ")}</Badge>

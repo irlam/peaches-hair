@@ -17,17 +17,24 @@ import { InstallAppCard } from "@/components/install-app-card";
 import { ReviewSection } from "@/components/review-section";
 import { ServicesSection } from "@/components/services-section";
 import { SiteHeader } from "@/components/site-header";
-import { DEFAULT_SERVICES } from "@/lib/salon";
+import { DEFAULT_SERVICES, DEFAULT_HOURS } from "@/lib/salon";
+import { getDb } from "@/db";
+import { businessHours } from "@/db/schema";
+import { getContactEmail } from "@/lib/contact";
 import { getSocialLinks } from "@/lib/social";
 import { getWhatsAppSettings, whatsAppChatUrl } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [socialLinks, whatsappSettings] = await Promise.all([
+  const [socialLinks, whatsappSettings, savedHours, contactEmail] = await Promise.all([
     getSocialLinks(),
     getWhatsAppSettings(),
+    getDb().select().from(businessHours),
+    getContactEmail(),
   ]);
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const hours = [1, 2, 3, 4, 5, 6, 0].map((dayOfWeek) => savedHours.find((row) => row.dayOfWeek === dayOfWeek) ?? { dayOfWeek, ...DEFAULT_HOURS[dayOfWeek] });
   const whatsappChat = whatsappSettings.showPublicChat
     ? whatsAppChatUrl(whatsappSettings.publicNumber)
     : "";
@@ -54,7 +61,7 @@ export default async function Home() {
             </span>
             <span>
               <Clock3 aria-hidden="true" />
-              Tuesday–Saturday
+              <a href="#opening-hours">View opening hours</a>
             </span>
           </div>
           <a className="text-link" href="#salon">
@@ -119,6 +126,10 @@ export default async function Home() {
         <div>
           <p className="eyebrow">Peaches Hair · Bolton</p>
           <h2>Ready for your next hair chapter?</h2>
+          <div id="opening-hours" className="opening-hours">
+            <h3>Opening hours</h3>
+            <dl>{hours.map((day) => <div key={day.dayOfWeek}><dt>{dayNames[day.dayOfWeek]}</dt><dd>{day.isClosed ? "Closed" : `${day.opensAt}–${day.closesAt}`}</dd></div>)}</dl>
+          </div>
         </div>
         <div className="contact-actions">
           <a href="#book">
@@ -126,11 +137,11 @@ export default async function Home() {
             <span><small>Online booking</small>Choose an appointment</span>
             <ArrowRight aria-hidden="true" />
           </a>
-          <a href="mailto:hello@peaches.hair">
+          {contactEmail && <a href={`mailto:${contactEmail}?subject=${encodeURIComponent("Peaches Hair enquiry")}`}>
             <Mail aria-hidden="true" />
-            <span><small>Email</small>hello@peaches.hair</span>
+            <span><small>Email</small>{contactEmail}</span>
             <ArrowRight aria-hidden="true" />
-          </a>
+          </a>}
           {whatsappChat && (
             <a href={whatsappChat} rel="noreferrer" target="_blank">
               <MessageCircle aria-hidden="true" />

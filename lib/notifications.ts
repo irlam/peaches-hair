@@ -1,5 +1,6 @@
 import { friendlyDate } from "./time";
 import { getWhatsAppSettings, sendWhatsAppTemplate } from "./whatsapp";
+import { getContactEmail } from "./contact";
 
 type AppointmentNotice = {
   id: string;
@@ -38,6 +39,7 @@ async function sendEmail(to: string[], subject: string, html: string) {
   const apiKey = config("RESEND_API_KEY");
   const from = config("EMAIL_FROM") || "Peaches Hair <appointments@peaches.hair>";
   if (!apiKey || to.length === 0) return { sent: false, reason: "not_configured" };
+  const replyTo = await getContactEmail();
 
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -45,7 +47,7 @@ async function sendEmail(to: string[], subject: string, html: string) {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from, to, subject, html }),
+    body: JSON.stringify({ from, to, subject, html, ...(replyTo ? { reply_to: replyTo } : {}) }),
   });
   if (!response.ok) throw new Error(`Email provider returned ${response.status}`);
   return { sent: true };

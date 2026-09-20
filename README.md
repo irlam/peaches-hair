@@ -105,3 +105,13 @@ npm run dev
 
 Create `.env.local` from `.env.example` when testing private features. Run
 `npm run test` before deployment.
+# Admin content tools
+
+- **Gallery:** upload, replace, edit descriptions/captions, set display order, hide/show or delete photos. Lower display-order values appear first. Hidden photos are only previewable by a signed-in admin.
+- **Price-list poster:** edit the saved logo-based design, import active service prices, add/remove rows, download square/portrait PNGs or open an A4 print version. The print dialog can save a PDF. Poster prices are a separate snapshot; use **Use current service prices** to refresh them after changing booking prices, then save. The saved design is stored in the existing SQLite settings table.
+- **Contact & socials:** set the public email inbox. Email links use the device's configured mail handler; the website cannot force an unconfigured phone to open a particular app. Booking emails use this address as Reply-To. Before a public address is saved, `SALON_EMAIL` is used as the fallback.
+- **Services & hours:** saved hours also appear on the homepage, including closed days. Refresh the public page after saving; no rebuild is needed for content changes.
+
+The installed app does not currently implement Web Push. Email/WhatsApp reminders still depend on their existing provider settings and scheduled reminder task. Installing the app alone does not subscribe a visitor to notifications.
+
+After a production build, `node scripts/check-admin-content.mjs` checks the content APIs and homepage using temporary isolated data. It does not send emails or WhatsApp messages.
